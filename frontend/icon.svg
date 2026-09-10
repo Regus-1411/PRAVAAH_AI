@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#1e1b4b" />
+    </linearGradient>
+    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563eb" />
+      <stop offset="50%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#ef4444" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="url(#bgGrad)" />
+  <circle cx="256" cy="256" r="180" fill="none" stroke="url(#ringGrad)" stroke-width="18" stroke-dasharray="8 6" filter="url(#glow)" />
+  <circle cx="256" cy="256" r="120" fill="#1e293b" stroke="#38bdf8" stroke-width="6" />
+  
+  <!-- Waves / Sensor Signals -->
+  <path d="M180 256 C210 220, 240 290, 270 240 C300 200, 320 270, 340 256" fill="none" stroke="#38bdf8" stroke-width="12" stroke-linecap="round" />
+  <path d="M190 286 C215 260, 245 310, 275 270 C300 240, 315 295, 330 286" fill="none" stroke="#ef4444" stroke-width="8" stroke-linecap="round" />
+  
+  <!-- Radar Warning Pulse Center -->
+  <circle cx="256" cy="256" r="22" fill="#ef4444" filter="url(#glow)" />
+  <circle cx="256" cy="256" r="10" fill="#ffffff" />
+  <text x="256" y="440" text-anchor="middle" fill="#f8fafc" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="34" letter-spacing="4">PRAVAAH-AI</text>
+</svg>

@@ -1,0 +1,157 @@
+{
+  "channels": {
+    "flood": {
+      "channelId": "3489676",
+      "apiKey": "EGH2VVJOOL78IB6L",
+      "name": "Water Level & Flood Monitoring",
+      "hazard": "flood",
+      "pollIntervalSeconds": 15,
+      "fields": {
+        "field1": {
+          "label": "Humidity",
+          "inputId": "humidity",
+          "unit": "%",
+          "thresholdDir": "above",
+          "warning": 85,
+          "critical": 95
+        },
+        "field2": {
+          "label": "Temperature",
+          "inputId": "temperature",
+          "unit": "deg C",
+          "thresholdDir": "above",
+          "warning": 38,
+          "critical": 45
+        },
+        "field3": {
+          "label": "Rainfall",
+          "inputId": "rainfall",
+          "unit": "mm",
+          "thresholdDir": "above",
+          "warning": 50,
+          "critical": 100
+        },
+        "field4": {
+          "label": "Water Level",
+          "inputId": "water",
+          "unit": "m",
+          "thresholdDir": "above",
+          "warning": 2.0,
+          "critical": 3.5
+        },
+        "field5": {
+          "label": "Flood Index",
+          "inputId": "",
+          "unit": "",
+          "thresholdDir": "above",
+          "warning": null,
+          "critical": null
+        }
+      }
+    },
+    "fire": {
+      "channelId": "3489733",
+      "apiKey": "D8B576260M8YV521",
+      "name": "Forest Fire Monitoring",
+      "hazard": "fire",
+      "pollIntervalSeconds": 15,
+      "fields": {
+        "field1": {
+          "label": "Temperature",
+          "inputId": "temperature",
+          "unit": "deg C",
+          "thresholdDir": "above",
+          "warning": 38,
+          "critical": 45
+        },
+        "field2": {
+          "label": "Humidity",
+          "inputId": "humidity",
+          "unit": "%",
+          "thresholdDir": "below",
+          "warning": 20,
+          "critical": 10
+        },
+        "field3": {
+          "label": "Wind Speed",
+          "inputId": "wind",
+          "unit": "km/h",
+          "thresholdDir": "above",
+          "warning": 30,
+          "critical": 50
+        },
+        "field4": {
+          "label": "Heat Index",
+          "inputId": "",
+          "unit": "deg C",
+          "thresholdDir": "above",
+          "warning": 40,
+          "critical": 54
+        },
+        "field5": {
+          "label": "Fire Risk",
+          "inputId": "",
+          "unit": "",
+          "thresholdDir": "above",
+          "warning": null,
+          "critical": null
+        }
+      }
+    },
+    "pollution": {
+      "channelId": "3489752",
+      "apiKey": "22HNY3TXBA09U4G6",
+      "name": "Air Pollution Monitoring",
+      "hazard": "pollution",
+      "pollIntervalSeconds": 15,
+      "fields": {
+        "field1": {
+          "label": "PM2.5",
+          "inputId": "pm25",
+          "unit": "ug/m3",
+          "thresholdDir": "above",
+          "warning": 35,
+          "critical": 75
+        },
+        "field2": {
+          "label": "PM10",
+          "inputId": "pm10",
+          "unit": "ug/m3",
+          "thresholdDir": "above",
+          "warning": 75,
+          "critical": 150
+        },
+        "field3": {
+          "label": "Gas Conc.",
+          "inputId": "gas",
+          "unit": "ppm",
+          "thresholdDir": "above",
+          "warning": 200,
+          "critical": 500
+        },
+        "field4": {
+          "label": "AQI",
+          "inputId": "",
+          "unit": "",
+          "thresholdDir": "above",
+          "warning": 100,
+          "critical": 200
+        },
+        "field5": {
+          "label": "CO Level",
+          "inputId": "",
+          "unit": "ppm",
+          "thresholdDir": "above",
+          "warning": 9,
+          "critical": 35
+        }
+      }
+    }
+  },
+  "alerting": {
+    "deduplicationMinutes": 5,
+    "maxAlertHistory": 50,
+    "enableBrowserNotifications": true,
+    "enableSound": true
+  }
+}

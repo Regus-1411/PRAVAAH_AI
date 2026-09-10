@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "public": false,
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/manifest.json", "destination": "/frontend/manifest.json" },
+    { "source": "/sw.js", "destination": "/frontend/sw.js" },
+    { "source": "/app.js", "destination": "/frontend/app.js" },
+    { "source": "/icon-(.*)", "destination": "/frontend/icon-$1" },
+    { "source": "/", "destination": "/frontend/index.html" },
+    { "source": "/(.*)", "destination": "/frontend/$1" }
+  ],
+  "headers": [
+    {
+      "source": "/sw.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+        { "key": "Service-Worker-Allowed", "value": "/" }
+      ]
+    },
+    {
+      "source": "/manifest.json",
+      "headers": [
+        { "key": "Content-Type", "value": "application/manifest+json" }
+      ]
+    }
+  ]
+}
