@@ -35,18 +35,23 @@ class HazardInput(BaseModel):
     # Flood
     water_level: Optional[float] = 1
 
-    # Pollution
+    # Pollution & Air Quality
     pm25: Optional[float] = 30
     pm10: Optional[float] = 50
     co: Optional[float] = 1
     no2: Optional[float] = 20
+    aqi: Optional[float] = None
+    pollution_risk: Optional[float] = None
 
     # Landslide
     slope: Optional[float] = 10
     soil_moisture: Optional[float] = 30
 
-    # Gas leak
+    # Gas & Fire
     gas_concentration: Optional[float] = 0
+    smoke: Optional[float] = 0
+    flame: Optional[float] = 0
+    flame_detection: Optional[float] = 0
 
 
 class AnalyzeInput(BaseModel):
@@ -65,8 +70,13 @@ class AnalyzeInput(BaseModel):
     pm10: Optional[float] = 50
     co: Optional[float] = 1.0           # Carbon Monoxide (ppm)
     no2: Optional[float] = 20.0         # Nitrogen Dioxide (ppb)
+    aqi: Optional[float] = None         # Air Quality Index
+    pollution_risk: Optional[float] = None  # Air risk score (%)
     pressure: Optional[float] = 1013.0  # Barometric pressure (hPa)
     gas: Optional[float] = 0            # maps to gas_concentration
+    smoke: Optional[float] = 0          # Smoke ppm
+    flame: Optional[float] = 0          # Flame detection
+    flame_detection: Optional[float] = 0
     slope: Optional[float] = 10
     soil: Optional[float] = 30          # maps to soil_moisture
 
@@ -273,18 +283,27 @@ def predict_flood(data):
 def predict_fire(data):
     temperature = getattr(data, "temperature", 30) or 0
     humidity = getattr(data, "humidity", 60) or 0
-    wind_speed = getattr(data, "wind_speed", 10) or 0
+    wind_speed = getattr(data, "wind_speed", getattr(data, "wind", 10)) or 0
     rainfall = getattr(data, "rainfall", 0) or 0
+    gas = getattr(data, "gas", getattr(data, "gas_concentration", 0)) or 0
+    smoke = getattr(data, "smoke", 0) or 0
+    flame = getattr(data, "flame", getattr(data, "flame_detection", 0)) or 0
 
     dryness = max(0, 100 - humidity)
     raw_score = dryness * 0.45 + temperature * 1.0 + wind_speed * 1.5
+    if flame > 0:
+        raw_score += 40
+    if smoke > 50:
+        raw_score += (smoke - 50) * 0.3
+    if gas > 200:
+        raw_score += (gas - 200) * 0.1
     if rainfall > 0:
         raw_score -= min(raw_score, rainfall * 1.5)
     score = limit(raw_score)
     risk = risk_level(score)
 
     if risk == "HIGH":
-        msg = f"Severe wildfire danger! Extreme dry heat ({temperature:.1f}°C, {humidity:.0f}% humidity) and high winds ({wind_speed:.1f} km/h) favor rapid spread."
+        msg = f"Severe wildfire danger! Extreme conditions (Temp: {temperature:.1f}°C, Humidity: {humidity:.0f}%, Gas: {gas:.0f}, Smoke: {smoke:.0f}, Flame: {'DETECTED' if flame > 0 else 'None'}) indicate high risk."
     elif risk == "MEDIUM":
         msg = f"Elevated fire weather warning. Warm and dry conditions ({temperature:.1f}°C, {humidity:.0f}% humidity). Maintain perimeter vigilance."
     else:
@@ -299,21 +318,34 @@ def predict_fire(data):
 
 
 def predict_pollution(data):
-    pm25 = getattr(data, "pm25", 30) or 0
-    pm10 = getattr(data, "pm10", 50) or 0
+    temperature = getattr(data, "temperature", 30) or 0
     co = getattr(data, "co", 1.0) or 0
-    no2 = getattr(data, "no2", 20.0) or 0
+    humidity = getattr(data, "humidity", 60) or 0
+    aqi = getattr(data, "aqi", None)
+    risk_score = getattr(data, "pollution_risk", getattr(data, "risk_score", getattr(data, "riskscore", None)))
 
-    score = pm25 * 0.7 + pm10 * 0.2 + co * 3 + no2 * 0.3
-    score = limit(score)
+    if risk_score is not None:
+        try:
+            score = limit(float(risk_score))
+        except (ValueError, TypeError):
+            score = 0.0
+    elif aqi is not None and aqi > 0:
+        score = limit(aqi * 0.5 + co * 3.0)
+    else:
+        pm25 = getattr(data, "pm25", 30) or 0
+        pm10 = getattr(data, "pm10", 50) or 0
+        no2 = getattr(data, "no2", 20.0) or 0
+        score = limit(pm25 * 0.7 + pm10 * 0.2 + co * 3.0 + no2 * 0.3)
+
     risk = risk_level(score)
 
+    aqi_str = str(aqi) if aqi is not None else "N/A"
     if risk == "HIGH":
-        msg = f"Hazardous air quality alert! PM2.5 ({pm25:.1f} µg/m³) and PM10 ({pm10:.1f} µg/m³) exceed critical health limits. Stay indoors and use N95 respirators."
+        msg = f"Hazardous air quality alert! Temp: {temperature:.1f}°C, CO: {co:.1f} ppm, Humidity: {humidity:.0f}%, AQI: {aqi_str}, Risk Score: {score:.1f}%. Stay indoors and use N95 respirators."
     elif risk == "MEDIUM":
-        msg = f"Moderate air pollution advisory. PM2.5 at {pm25:.1f} µg/m³. Sensitive populations should limit prolonged outdoor exertion."
+        msg = f"Moderate air pollution advisory. Temp: {temperature:.1f}°C, CO: {co:.1f} ppm, Humidity: {humidity:.0f}%, AQI: {aqi_str}, Risk Score: {score:.1f}%. Sensitive populations should limit outdoor activity."
     else:
-        msg = f"Good air quality. Particulate levels (PM2.5: {pm25:.1f} µg/m³, PM10: {pm10:.1f} µg/m³) are well within clean air standards."
+        msg = f"Good air quality. Temp: {temperature:.1f}°C, CO: {co:.1f} ppm, Humidity: {humidity:.0f}%, AQI: {aqi_str}, Risk Score: {score:.1f}%. Ambient conditions are within clean air standards."
 
     return {
         "score": round(score, 2),

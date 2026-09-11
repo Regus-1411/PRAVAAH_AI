@@ -22,33 +22,60 @@ module.exports = (req, res) => {
       pollIntervalSeconds: 15,
       alerting: { deduplicationMinutes: 5, maxAlertHistory: 50 },
       channels: {
-        water_level_flood: {
+        flood: {
           channelId: 3489676,
-          readKey: "",
+          apiKey: "EGH2VVJOOL78IB6L",
           name: "Water Level & Flood Monitoring",
+          hazard: "flood",
+          pollIntervalSeconds: 15,
           fields: {
-            field1: { label: "Humidity", unit: "%", min: 0, max: 100, warning: 85, critical: 95, thresholdDir: "above", calibrated: true },
-            field2: { label: "Temperature", unit: "°C", min: -10, max: 60, warning: 38, critical: 45, thresholdDir: "above", calibrated: true },
-            field4: { label: "Water Level", unit: "m", min: 0, max: 10, warning: 2.0, critical: 3.5, thresholdDir: "above", calibrated: true }
+            field1: { label: "Humidity", inputId: "humidity", unit: "%", min: 0, max: 100, warning: 85, critical: 95, thresholdDir: "above" },
+            field2: { label: "Temperature", inputId: "temperature", unit: "°C", min: -10, max: 60, warning: 38, critical: 45, thresholdDir: "above" },
+            field3: { label: "Rainfall", inputId: "rainfall", unit: "mm", min: 0, max: 500, warning: 50, critical: 100, thresholdDir: "above" },
+            field4: { label: "Water Level", inputId: "water", unit: "m", min: 0, max: 10, warning: 2.0, critical: 3.5, thresholdDir: "above" },
+            field5: { label: "Flood Risk", inputId: "flood_risk", unit: "%", min: 0, max: 100, warning: 50, critical: 75, thresholdDir: "above" }
           }
         },
-        forest_fire: {
-          channelId: 0,
-          readKey: "",
-          name: "Forest Fire & Weather Station",
+        fire: {
+          channelId: 3489733,
+          apiKey: "D8B576260M8YV521",
+          name: "Forest Fire Monitoring",
+          hazard: "fire",
+          pollIntervalSeconds: 15,
           fields: {
-            field1: { label: "Temperature", unit: "°C", min: -10, max: 60, warning: 38, critical: 45, thresholdDir: "above" },
-            field2: { label: "Humidity", unit: "%", min: 0, max: 100, warning: 25, critical: 15, thresholdDir: "below" },
-            field3: { label: "Wind Speed", unit: "km/h", min: 0, max: 150, warning: 30, critical: 50, thresholdDir: "above" }
+            field1: { label: "Temperature", inputId: "temperature", unit: "°C", min: -10, max: 60, warning: 40, critical: 50, thresholdDir: "above" },
+            field2: { label: "Gas", inputId: "gas", unit: "ppm", min: 0, max: 1000, warning: 300, critical: 600, thresholdDir: "above" },
+            field3: { label: "Smoke", inputId: "smoke", unit: "ppm", min: 0, max: 500, warning: 50, critical: 100, thresholdDir: "above" },
+            field4: { label: "Humidity", inputId: "humidity", unit: "%", min: 0, max: 100, warning: 25, critical: 15, thresholdDir: "below" },
+            field5: { label: "Flame Detection", inputId: "flame", unit: "", min: 0, max: 1, warning: 1, critical: 1, thresholdDir: "above" }
+          }
+        },
+        pollution: {
+          channelId: 3489752,
+          apiKey: "22HNY3TXBA09U4G6",
+          name: "Air Pollution Monitoring",
+          hazard: "pollution",
+          pollIntervalSeconds: 15,
+          fields: {
+            field1: { label: "Temperature", inputId: "temperature", unit: "°C", min: -10, max: 60, warning: 38, critical: 45, thresholdDir: "above" },
+            field2: { label: "CO", inputId: "co", unit: "ppm", min: 0, max: 100, warning: 9, critical: 35, thresholdDir: "above" },
+            field3: { label: "Humidity", inputId: "humidity", unit: "%", min: 0, max: 100, warning: 80, critical: 90, thresholdDir: "above" },
+            field4: { label: "AQI", inputId: "aqi", unit: "Index", min: 0, max: 500, warning: 100, critical: 200, thresholdDir: "above" },
+            field5: { label: "Risk Score", inputId: "pollution_risk", unit: "%", min: 0, max: 100, warning: 50, critical: 75, thresholdDir: "above" }
           }
         },
         air_pollution: {
-          channelId: 0,
-          readKey: "",
-          name: "Air Quality Monitoring",
+          channelId: 3489752,
+          apiKey: "22HNY3TXBA09U4G6",
+          name: "Air Pollution Monitoring",
+          hazard: "pollution",
+          pollIntervalSeconds: 15,
           fields: {
-            field1: { label: "PM2.5", unit: "µg/m³", min: 0, max: 500, warning: 35, critical: 75, thresholdDir: "above" },
-            field2: { label: "PM10", unit: "µg/m³", min: 0, max: 1000, warning: 75, critical: 150, thresholdDir: "above" }
+            field1: { label: "Temperature", inputId: "temperature", unit: "°C", min: -10, max: 60, warning: 38, critical: 45, thresholdDir: "above" },
+            field2: { label: "CO", inputId: "co", unit: "ppm", min: 0, max: 100, warning: 9, critical: 35, thresholdDir: "above" },
+            field3: { label: "Humidity", inputId: "humidity", unit: "%", min: 0, max: 100, warning: 80, critical: 90, thresholdDir: "above" },
+            field4: { label: "AQI", inputId: "aqi", unit: "Index", min: 0, max: 500, warning: 100, critical: 200, thresholdDir: "above" },
+            field5: { label: "Risk Score", inputId: "pollution_risk", unit: "%", min: 0, max: 100, warning: 50, critical: 75, thresholdDir: "above" }
           }
         }
       }

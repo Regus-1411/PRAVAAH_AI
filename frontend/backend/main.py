@@ -264,13 +264,40 @@ def predict_fire(data):
 
 
 def predict_pollution(data):
-    score = data.pm25 * 0.7 + data.pm10 * 0.2 + data.co * 3 + data.no2 * 0.3
-    score = limit(score)
+    temperature = getattr(data, "temperature", 30) or 0
+    co = getattr(data, "co", 1.0) or 0
+    humidity = getattr(data, "humidity", 60) or 0
+    aqi = getattr(data, "aqi", None)
+    risk_score = getattr(data, "pollution_risk", getattr(data, "risk_score", getattr(data, "riskscore", None)))
+
+    if risk_score is not None:
+        try:
+            score = limit(float(risk_score))
+        except (ValueError, TypeError):
+            score = 0.0
+    elif aqi is not None and aqi > 0:
+        score = limit(aqi * 0.5 + co * 3.0)
+    else:
+        pm25 = getattr(data, "pm25", 30) or 0
+        pm10 = getattr(data, "pm10", 50) or 0
+        no2 = getattr(data, "no2", 20.0) or 0
+        score = limit(pm25 * 0.7 + pm10 * 0.2 + co * 3.0 + no2 * 0.3)
+
+    risk = risk_level(score)
+
+    aqi_str = str(aqi) if aqi is not None else "N/A"
+    if risk == "HIGH":
+        msg = f"Hazardous air quality alert! Temp: {temperature:.1f}°C, CO: {co:.1f} ppm, Humidity: {humidity:.0f}%, AQI: {aqi_str}, Risk Score: {score:.1f}%. Stay indoors and use N95 respirators."
+    elif risk == "MEDIUM":
+        msg = f"Moderate air pollution advisory. Temp: {temperature:.1f}°C, CO: {co:.1f} ppm, Humidity: {humidity:.0f}%, AQI: {aqi_str}, Risk Score: {score:.1f}%. Sensitive populations should limit outdoor activity."
+    else:
+        msg = f"Good air quality. Temp: {temperature:.1f}°C, CO: {co:.1f} ppm, Humidity: {humidity:.0f}%, AQI: {aqi_str}, Risk Score: {score:.1f}%. Ambient conditions are within clean air standards."
+
     return {
         "score": round(score, 2),
-        "risk": risk_level(score),
+        "risk": risk,
         "affected_area": round(score * 0.10, 2),
-        "message": "Poor air quality detected. Sensitive people should reduce outdoor activity.",
+        "message": msg,
     }
 
 

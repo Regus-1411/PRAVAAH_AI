@@ -18,7 +18,7 @@
         "field2": {
           "label": "Temperature",
           "inputId": "temperature",
-          "unit": "deg C",
+          "unit": "°C",
           "thresholdDir": "above",
           "warning": 38,
           "critical": 45
@@ -40,12 +40,12 @@
           "critical": 3.5
         },
         "field5": {
-          "label": "Flood Index",
-          "inputId": "",
-          "unit": "",
+          "label": "Flood Risk",
+          "inputId": "flood_risk",
+          "unit": "%",
           "thresholdDir": "above",
-          "warning": null,
-          "critical": null
+          "warning": 50,
+          "critical": 75
         }
       }
     },
@@ -59,42 +59,42 @@
         "field1": {
           "label": "Temperature",
           "inputId": "temperature",
-          "unit": "deg C",
+          "unit": "°C",
           "thresholdDir": "above",
-          "warning": 38,
-          "critical": 45
+          "warning": 40,
+          "critical": 50
         },
         "field2": {
+          "label": "Gas",
+          "inputId": "gas",
+          "unit": "ppm",
+          "thresholdDir": "above",
+          "warning": 300,
+          "critical": 600
+        },
+        "field3": {
+          "label": "Smoke",
+          "inputId": "smoke",
+          "unit": "ppm",
+          "thresholdDir": "above",
+          "warning": 50,
+          "critical": 100
+        },
+        "field4": {
           "label": "Humidity",
           "inputId": "humidity",
           "unit": "%",
           "thresholdDir": "below",
-          "warning": 20,
-          "critical": 10
-        },
-        "field3": {
-          "label": "Wind Speed",
-          "inputId": "wind",
-          "unit": "km/h",
-          "thresholdDir": "above",
-          "warning": 30,
-          "critical": 50
-        },
-        "field4": {
-          "label": "Heat Index",
-          "inputId": "",
-          "unit": "deg C",
-          "thresholdDir": "above",
-          "warning": 40,
-          "critical": 54
+          "warning": 25,
+          "critical": 15
         },
         "field5": {
-          "label": "Fire Risk",
-          "inputId": "",
+          "label": "Flame Detection",
+          "inputId": "flame",
           "unit": "",
           "thresholdDir": "above",
-          "warning": null,
-          "critical": null
+          "warning": 1,
+          "critical": 1
         }
       }
     },
@@ -106,9 +106,156 @@
       "pollIntervalSeconds": 15,
       "fields": {
         "field1": {
+          "label": "Temperature",
+          "inputId": "temperature",
+          "unit": "°C",
+          "thresholdDir": "above",
+          "warning": 38,
+          "critical": 45
+        },
+        "field2": {
+          "label": "CO",
+          "inputId": "co",
+          "unit": "ppm",
+          "thresholdDir": "above",
+          "warning": 9,
+          "critical": 35
+        },
+        "field3": {
+          "label": "Humidity",
+          "inputId": "humidity",
+          "unit": "%",
+          "thresholdDir": "above",
+          "warning": 80,
+          "critical": 90
+        },
+        "field4": {
+          "label": "AQI",
+          "inputId": "aqi",
+          "unit": "Index",
+          "thresholdDir": "above",
+          "warning": 100,
+          "critical": 200
+        },
+        "field5": {
+          "label": "Risk Score",
+          "inputId": "pollution_risk",
+          "unit": "%",
+          "thresholdDir": "above",
+          "warning": 50,
+          "critical": 75
+        }
+      }
+    },
+    "weather": {
+      "channelId": "3489733",
+      "apiKey": "D8B576260M8YV521",
+      "name": "Extreme Weather Station",
+      "hazard": "weather",
+      "pollIntervalSeconds": 15,
+      "fields": {
+        "field1": {
+          "label": "Temperature",
+          "inputId": "temperature",
+          "unit": "°C",
+          "thresholdDir": "above",
+          "warning": 38,
+          "critical": 45
+        },
+        "field2": {
+          "label": "Humidity",
+          "inputId": "humidity",
+          "unit": "%",
+          "thresholdDir": "above",
+          "warning": 90,
+          "critical": 98
+        },
+        "field3": {
+          "label": "Wind Speed",
+          "inputId": "wind",
+          "unit": "km/h",
+          "thresholdDir": "above",
+          "warning": 35,
+          "critical": 60
+        },
+        "field4": {
+          "label": "Heat Index",
+          "inputId": "heat_index",
+          "unit": "°C",
+          "thresholdDir": "above",
+          "warning": 40,
+          "critical": 54
+        },
+        "field5": {
+          "label": "Storm Risk",
+          "inputId": "weather_risk",
+          "unit": "%",
+          "thresholdDir": "above",
+          "warning": 50,
+          "critical": 75
+        }
+      }
+    },
+    "landslide": {
+      "channelId": "3489676",
+      "apiKey": "EGH2VVJOOL78IB6L",
+      "name": "Landslide & Slope Hydro Station",
+      "hazard": "landslide",
+      "pollIntervalSeconds": 15,
+      "fields": {
+        "field1": {
+          "label": "Humidity",
+          "inputId": "humidity",
+          "unit": "%",
+          "thresholdDir": "above",
+          "warning": 85,
+          "critical": 95
+        },
+        "field2": {
+          "label": "Temperature",
+          "inputId": "temperature",
+          "unit": "°C",
+          "thresholdDir": "above",
+          "warning": 38,
+          "critical": 45
+        },
+        "field3": {
+          "label": "Rainfall",
+          "inputId": "rainfall",
+          "unit": "mm",
+          "thresholdDir": "above",
+          "warning": 50,
+          "critical": 100
+        },
+        "field4": {
+          "label": "Water Level",
+          "inputId": "water",
+          "unit": "m",
+          "thresholdDir": "above",
+          "warning": 2.0,
+          "critical": 3.5
+        },
+        "field5": {
+          "label": "Slope Hydro Risk",
+          "inputId": "landslide_risk",
+          "unit": "%",
+          "thresholdDir": "above",
+          "warning": 50,
+          "critical": 75
+        }
+      }
+    },
+    "gas": {
+      "channelId": "3489752",
+      "apiKey": "22HNY3TXBA09U4G6",
+      "name": "Industrial Gas & Air Safety Station",
+      "hazard": "gas",
+      "pollIntervalSeconds": 15,
+      "fields": {
+        "field1": {
           "label": "PM2.5",
           "inputId": "pm25",
-          "unit": "ug/m3",
+          "unit": "µg/m³",
           "thresholdDir": "above",
           "warning": 35,
           "critical": 75
@@ -116,7 +263,7 @@
         "field2": {
           "label": "PM10",
           "inputId": "pm10",
-          "unit": "ug/m3",
+          "unit": "µg/m³",
           "thresholdDir": "above",
           "warning": 75,
           "critical": 150
@@ -131,15 +278,15 @@
         },
         "field4": {
           "label": "AQI",
-          "inputId": "",
-          "unit": "",
+          "inputId": "aqi",
+          "unit": "Index",
           "thresholdDir": "above",
           "warning": 100,
           "critical": 200
         },
         "field5": {
           "label": "CO Level",
-          "inputId": "",
+          "inputId": "co",
           "unit": "ppm",
           "thresholdDir": "above",
           "warning": 9,

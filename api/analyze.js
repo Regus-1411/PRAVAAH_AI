@@ -179,9 +179,15 @@ function predictFire(d) {
   const humidity = Number(d.humidity) || 60;
   const wind = Number(d.wind != null ? d.wind : d.wind_speed) || 10;
   const rainfall = Number(d.rainfall) || 0;
+  const gas = Number(d.gas) || 0;
+  const smoke = Number(d.smoke) || 0;
+  const flame = Number(d.flame != null ? d.flame : d.flame_detection) || 0;
 
   const dryness = Math.max(0, 100 - humidity);
   let rawScore = dryness * 0.45 + temperature * 1.0 + wind * 1.5;
+  if (flame > 0) rawScore += 40;
+  if (smoke > 50) rawScore += (smoke - 50) * 0.3;
+  if (gas > 200) rawScore += (gas - 200) * 0.1;
   if (rainfall > 0) {
     rawScore -= Math.min(rawScore, rainfall * 1.5);
   }
@@ -190,7 +196,7 @@ function predictFire(d) {
 
   let msg = "";
   if (risk === "HIGH") {
-    msg = `Severe wildfire danger! Extreme dry heat (${temperature.toFixed(1)}°C, ${humidity.toFixed(0)}% humidity) and high winds (${wind.toFixed(1)} km/h) favor rapid spread.`;
+    msg = `Severe wildfire danger! Extreme conditions (Temp: ${temperature.toFixed(1)}°C, Humidity: ${humidity.toFixed(0)}%, Gas: ${gas}, Smoke: ${smoke}, Flame: ${flame > 0 ? "DETECTED" : "None"}) indicate high risk.`;
   } else if (risk === "MEDIUM") {
     msg = `Elevated fire weather warning. Warm and dry conditions (${temperature.toFixed(1)}°C, ${humidity.toFixed(0)}% humidity). Maintain perimeter vigilance.`;
   } else {
@@ -206,21 +212,36 @@ function predictFire(d) {
 }
 
 function predictPollution(d) {
-  const pm25 = Number(d.pm25) || 30;
-  const pm10 = Number(d.pm10) || 50;
-  const co = Number(d.co) || 1.0;
-  const no2 = Number(d.no2) || 20.0;
+  const temperature = d.temperature != null && d.temperature !== "" ? Number(d.temperature) : 30;
+  const co = d.co != null && d.co !== "" ? Number(d.co) : 1.0;
+  const humidity = d.humidity != null && d.humidity !== "" ? Number(d.humidity) : 60;
+  const aqi = d.aqi != null && d.aqi !== "" ? Number(d.aqi) : null;
+  const riskScore = d.pollution_risk != null && d.pollution_risk !== "" 
+    ? Number(d.pollution_risk) 
+    : (d.riskscore != null && d.riskscore !== "" ? Number(d.riskscore) : null);
 
-  const score = limit(pm25 * 0.7 + pm10 * 0.2 + co * 3 + no2 * 0.3);
+  let score = 0;
+  if (riskScore !== null && !isNaN(riskScore)) {
+    // Direct from ThingSpeak / input telemetry: use as-is without processing
+    score = limit(riskScore);
+  } else if (aqi !== null && aqi > 0) {
+    score = limit(aqi * 0.5 + co * 3.0);
+  } else {
+    const pm25 = Number(d.pm25) || 30;
+    const pm10 = Number(d.pm10) || 50;
+    const no2 = Number(d.no2) || 20.0;
+    score = limit(pm25 * 0.7 + pm10 * 0.2 + co * 3.0 + no2 * 0.3);
+  }
+
   const risk = riskLevel(score);
 
   let msg = "";
   if (risk === "HIGH") {
-    msg = `Hazardous air quality alert! PM2.5 (${pm25.toFixed(1)} µg/m³) and PM10 (${pm10.toFixed(1)} µg/m³) exceed critical health limits. Stay indoors and use N95 respirators.`;
+    msg = `Hazardous air quality alert! Temp: ${temperature.toFixed(1)}°C, CO: ${co.toFixed(1)} ppm, Humidity: ${humidity.toFixed(0)}%, AQI: ${aqi !== null ? aqi : 'N/A'}, Risk Score: ${score.toFixed(1)}%. Stay indoors and use N95 respirators.`;
   } else if (risk === "MEDIUM") {
-    msg = `Moderate air pollution advisory. PM2.5 at ${pm25.toFixed(1)} µg/m³. Sensitive populations should limit prolonged outdoor exertion.`;
+    msg = `Moderate air pollution advisory. Temp: ${temperature.toFixed(1)}°C, CO: ${co.toFixed(1)} ppm, Humidity: ${humidity.toFixed(0)}%, AQI: ${aqi !== null ? aqi : 'N/A'}, Risk Score: ${score.toFixed(1)}%. Sensitive populations should limit prolonged outdoor exertion.`;
   } else {
-    msg = `Good air quality. Particulate levels (PM2.5: ${pm25.toFixed(1)} µg/m³, PM10: ${pm10.toFixed(1)} µg/m³) are well within clean air standards.`;
+    msg = `Good air quality. Temp: ${temperature.toFixed(1)}°C, CO: ${co.toFixed(1)} ppm, Humidity: ${humidity.toFixed(0)}%, AQI: ${aqi !== null ? aqi : 'N/A'}, Risk Score: ${score.toFixed(1)}%. Ambient conditions are within clean air standards.`;
   }
 
   return {

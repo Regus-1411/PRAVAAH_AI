@@ -9,13 +9,18 @@ let gpsWatchId = null;
 
 
 /* =========================================
-   HAZARD SELECTION
+   HAZARD SELECTION & PERSISTENCE
 ========================================= */
 function selectHazard(button, hazard) {
     document.querySelectorAll(".hazard-btn").forEach(b => b.classList.remove("active"));
-    button.classList.add("active");
+    if (button) button.classList.add("active");
     selectedHazard = hazard;
-    TS.switchToHazard(hazard);
+    try {
+        localStorage.setItem("pravaah_selected_hazard", hazard);
+    } catch (e) {}
+    if (typeof TS !== "undefined" && TS.switchToHazard) {
+        TS.switchToHazard(hazard);
+    }
 }
 
 function value(id) {
@@ -104,11 +109,16 @@ async function predictHazard(opts = {}) {
         pm25: value("pm25"),
         pm10: value("pm10"),
         gas: value("gas"),
+        smoke: value("smoke"),
+        flame: value("flame"),
+        aqi: value("aqi"),
+        pollution_risk: value("pollution_risk"),
+        riskscore: value("pollution_risk"),
         slope: value("slope"),
         soil: value("soil"),
         pressure: value("pressure") || 1013,
-        co: value("co") || 1.0,
-        no2: value("no2") || 20.0
+        co: value("co") || 0,
+        no2: value("no2") || 0
     };
     try {
         const resp = await fetch("/api/analyze", {
@@ -193,7 +203,19 @@ async function predictHazard(opts = {}) {
 window.addEventListener("load", async () => {
     initializeMap();
 
-    // Register Service Worker for PWA & Background Mobile Push Notifications
+    // 1. Restore navigated hazard module from localStorage across page refreshes
+    const savedHazard = localStorage.getItem("pravaah_selected_hazard") || "flood";
+    selectedHazard = savedHazard;
+    document.querySelectorAll(".hazard-btn").forEach(btn => {
+        const onclickAttr = btn.getAttribute("onclick") || "";
+        if (onclickAttr.includes(`'${savedHazard}'`) || onclickAttr.includes(`"${savedHazard}"`)) {
+            btn.classList.add("active");
+        } else {
+            btn.classList.remove("active");
+        }
+    });
+
+    // 2. Register Service Worker for PWA & Background Mobile Push Notifications
     if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("/sw.js")
             .then((reg) => console.log("PRAVAAH-AI ServiceWorker registered:", reg.scope))
@@ -660,19 +682,19 @@ const AM = (() => {
 const SCENARIO_PRESETS = {
     flood_high: {
         hazard: "flood",
-        values: { rainfall: 125, water: 3.8, humidity: 92, temperature: 26, wind: 20 }
+        values: { rainfall: 125, water: 3.8, humidity: 92, temperature: 26, wind: 20, flood_risk: 94 }
     },
     flood_med: {
         hazard: "flood",
-        values: { rainfall: 55, water: 1.8, humidity: 75, temperature: 28, wind: 12 }
+        values: { rainfall: 55, water: 1.8, humidity: 75, temperature: 28, wind: 12, flood_risk: 54 }
     },
     fire_high: {
         hazard: "fire",
-        values: { temperature: 44, humidity: 12, wind: 42, rainfall: 0 }
+        values: { temperature: 44, humidity: 12, gas: 450, smoke: 120, flame: 1 }
     },
     pollution_high: {
         hazard: "pollution",
-        values: { pm25: 180, pm10: 290, co: 8.5, no2: 85, temperature: 34, humidity: 45 }
+        values: { temperature: 38, co: 12.5, humidity: 82, aqi: 220, pollution_risk: 85 }
     },
     weather_high: {
         hazard: "weather",
@@ -688,7 +710,7 @@ const SCENARIO_PRESETS = {
     },
     safe_baseline: {
         hazard: "flood",
-        values: { temperature: 27, humidity: 55, rainfall: 0, water: 0.6, pm25: 15, pm10: 28, gas: 0, slope: 5, soil: 20, pressure: 1013, co: 0.5, no2: 12, wind: 8 }
+        values: { temperature: 27, humidity: 55, rainfall: 0, water: 0.6, flood_risk: 12, pm25: 15, pm10: 28, gas: 0, smoke: 0, flame: 0, slope: 5, soil: 20, pressure: 1013, co: 0.5, no2: 12, wind: 8, aqi: 40, pollution_risk: 15 }
     }
 };
 
@@ -719,52 +741,13 @@ function applyPreset(presetKey) {
 
 
 /* =========================================
-   SENSOR DATA CALIBRATION & SANITIZATION
-   Prevents uncalibrated raw MCU/ADC integers
-   (e.g., 3123°C or 956% humidity or 72.4m water)
-   from showing false information.
+   SENSOR DATA RETRIEVAL (DIRECT AS-IS)
+   Takes telemetry data from ThingSpeak directly
+   without artificial calibration/scaling.
 ========================================= */
 function calibrateSensorValue(fieldKey, fCfg, raw) {
     let val = parseFloat(raw);
     if (isNaN(val)) return null;
-
-    const lbl = (fCfg.label || "").toLowerCase();
-    const unt = (fCfg.unit || "").toLowerCase();
-    const inp = (fCfg.inputId || "").toLowerCase();
-
-    // 1. Temperature (°C) - ESP32/Arduino DHT sensor sending temp*100 (e.g. 3123 -> 31.23°C)
-    if (lbl.includes("temp") || unt.includes("deg") || inp === "temperature") {
-        if (val > 1000 && val <= 7000) val = val / 100;
-        else if (val > 65 && val <= 1000) val = val / 10;
-        val = Math.max(-40, Math.min(65, val));
-    }
-    // 2. Humidity (%) - DHT/analog raw value (e.g. 911 -> 91.1%, 956 -> 95.6%)
-    else if (lbl.includes("humid") || unt.includes("%") || inp === "humidity") {
-        if (val > 100 && val <= 1024) val = val / 10;
-        val = Math.max(0, Math.min(100, val));
-    }
-    // 3. Water Level (m) - ultrasonic/distance sensor in cm/raw ADC -> meters (e.g. 72.3 cm -> 0.72 m)
-    else if (lbl.includes("water") || unt === "m" || inp === "water") {
-        if (val > 20 && val <= 500) val = val / 100;       // cm to meters
-        else if (val > 500 && val <= 5000) val = val / 1000; // mm to meters
-        val = Math.max(0, Math.min(15, val));
-    }
-    // 4. Rainfall (mm)
-    else if (lbl.includes("rain") || unt === "mm" || inp === "rainfall") {
-        if (val > 500 && val <= 5000) val = val / 10;
-        val = Math.max(0, Math.min(300, val));
-    }
-    // 5. Gas Concentration (ppm)
-    else if (lbl.includes("gas") || unt.includes("ppm") || inp === "gas") {
-        if (val > 5000) val = val / 10;
-        val = Math.max(0, Math.min(1000, val));
-    }
-    // 6. PM2.5 / PM10 (µg/m³)
-    else if (lbl.includes("pm") || inp.startsWith("pm")) {
-        if (val > 1000) val = val / 10;
-        val = Math.max(0, Math.min(500, val));
-    }
-
     return val;
 }
 
@@ -784,8 +767,15 @@ const TS = (() => {
     let _latestCalibrated = {}; // "chKey" → { fieldKey: calibratedValue }
 
     const HAZARD_TO_CHANNEL = {
-        flood: "flood", fire: "fire", pollution: "pollution",
-        weather: null, landslide: null, gas: null
+        flood: "flood",
+        water_level_flood: "flood",
+        fire: "fire",
+        forest_fire: "fire",
+        pollution: "pollution",
+        air_pollution: "pollution",
+        weather: "weather",
+        landslide: "landslide",
+        gas: "gas"
     };
 
     /* ── Status badge ── */
@@ -840,7 +830,7 @@ const TS = (() => {
             _history[hKey].push(num);
             if (_history[hKey].length>20) _history[hKey].shift();
 
-            // Determine tile alert colour based on calibrated physical thresholds
+            // Determine tile alert colour based on physical thresholds
             let tileAccent = "#38bdf8"; // clean cyan/blue
             let statusPill = "NORMAL";
             let pillColor = "#0284c7";
@@ -854,6 +844,8 @@ const TS = (() => {
                 if (hit) { tileAccent = "#f59e0b"; statusPill = "WARNING"; pillColor = "#d97706"; }
             }
 
+            const displayVal = Number.isFinite(num) ? (Number.isInteger(num) ? num : parseFloat(num.toFixed(2))) : raw;
+
             const tile = document.createElement("div");
             tile.className = "ts-gauge-tile updated";
             tile.id        = "ts-tile-"+fKey;
@@ -864,7 +856,7 @@ const TS = (() => {
                     <div class="ts-tile-label">${fCfg.label}</div>
                     <span style="font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px;background:${pillColor};color:white;">${statusPill}</span>
                  </div>`+
-                `<div class="ts-tile-value" style="color:${tileAccent}">${num.toFixed(2)}</div>`+
+                `<div class="ts-tile-value" style="color:${tileAccent}">${displayVal}</div>`+
                 `<div class="ts-tile-unit">${fCfg.unit || ""}</div>`+
                 `<div class="ts-sparkline">${_spark(_history[hKey])}</div>`;
             grid.appendChild(tile);
@@ -874,7 +866,7 @@ const TS = (() => {
         if (!hasAny) _showNoData("No numeric data yet. Ensure sensor is publishing to ThingSpeak.");
     }
 
-    /* ── Auto-fill form inputs with calibrated values ── */
+    /* ── Auto-fill form inputs with values ── */
     function _fillForm(feed, chKey) {
         const ch = _channels[chKey];
         Object.entries(ch.fields).forEach(([fKey, fCfg]) => {
@@ -883,7 +875,8 @@ const TS = (() => {
             const num = calibrateSensorValue(fKey, fCfg, raw);
             if (num === null) return;
             const el = document.getElementById(fCfg.inputId);
-            if (el) el.value = num.toFixed(2);
+            const displayVal = Number.isFinite(num) ? (Number.isInteger(num) ? num : parseFloat(num.toFixed(2))) : raw;
+            if (el) el.value = displayVal;
         });
     }
 
